@@ -18,11 +18,14 @@ The BakingApp allow a user to select a recipe and see video-guided steps for how
 ## Common Project Requirements 
 
 App is written solely in the Java Programming Language.
-Movies are displayed in the main layout via a grid of their corresponding movie poster thumbnails.
-UI contains an element (i.e a spinner or settings menu) to toggle the sort order of the movies by: most popular, highest rated.
-UI contains a screen for displaying the details for a selected movie.
-Movie details layout contains title, release date, movie poster, vote average, and plot synopsis.
-App utilizes stable release versions of all libraries, Gradle, and Android Studio.
+App utilizes stable release versions of all libraries, Gradle, and Android Studio. 
+App conforms to common standards found in the [Android Nanodegree General Project Guidelines](http://udacity.github.io/android-nanodegree-guidelines/core.html).
+Application uses Master Detail Flow to display recipe steps and navigation between them.
+Application uses Exoplayer to display videos.
+Application properly initializes and releases video assets when appropriate.
+Application should properly retrieve media assets from the provided network links. It should properly handle network requests.
+Application makes use of Espresso to test aspects of the UI.
+Application sensibly utilizes a third-party library to enhance the app's features. That could be helper library to interface with ContentProviders if you choose to store the recipes, a UI binding library to avoid writing findViewById a bunch of times, or something similar.
 
 ## General App Usage
 

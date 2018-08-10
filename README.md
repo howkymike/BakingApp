@@ -4,19 +4,16 @@ The BakingApp allow a user to select a recipe and see video-guided steps for how
 - BakingApp for Udacity Android Developer Nanodegree
 - This app retrieves data from udacity
 
-Libraries are used in this Project are:
+## Built With
 
-- Appcombat
-- RecyclerView
-- Preferences
-- ViewModel and LiveData
-- Room
-- Butterknife
-- Picasso
-- Retrofit
-- GSON & Converter
-- CardView
-- RXJAVA
+* [Appcombat](http://www.dropwizard.io/1.0.2/docs/) - The web framework used
+* [Maven](https://maven.apache.org/) - Dependency Management
+* [RecyclerView](https://developer.android.com/reference/android/support/v7/widget/RecyclerView) - A flexible view for providing a limited window into a large data set
+* [Picasso](http://square.github.io/picasso/) - Allows for hassle-free image loading in the application
+* [Volley](https://github.com/google/volley) - HTTP library
+* [CardView](https://developer.android.com/reference/android/support/v7/widget/CardView) - A FrameLayout with a rounded corner background and shadow
+* [Exoplayer](https://github.com/google/ExoPlayer) -  Application level media player for Android
+* [Schematic](https://github.com/SimonVT/schematic) - Automatically generate a ContentProvider
 
 ## Common Project Requirements 
 

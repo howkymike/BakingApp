@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">Baking App</string>
+    <string name="menu_title_share">Share</string>
+    <string name="item_hint_name">Name</string>
+    <string name="app_detail_recipe_name">Recipe</string>
+    <string name="detail_ingredients_tv">Ingredients</string>
+    <string name="detail_steps_tv">Steps</string>
+    <string name="detail_cake_image_descryption">There should a cake image</string>
+    <string name="detail_cake_servings_descryption">Servings:  </string>
+    <string name="step_text">Step</string>
+    <string name="stepDetailDesc">Detailed step descryption</string>
+    <string name="action_previous">previous</string>
+    <string name="action_next">Next</string>
+    <string name="next_imgbtn_description">Next</string>
+    <string name="prev_imgbtn_description">Previous</string>
+    <string name="ingredient_check_image_descryption">Check image</string>
+    <string name="appwidget_text">EXAMPLE</string>
+    <string name="add_widget">Add widget</string>
+    <string name="ingredinets">Ingredients</string>
+    <string name="empty_widget_text">Choose a recipe and you will see ingredients</string>
+</resources>

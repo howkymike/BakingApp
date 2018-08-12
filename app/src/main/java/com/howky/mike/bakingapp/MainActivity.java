@@ -1,5 +1,6 @@
 package com.howky.mike.bakingapp;
 
+import android.content.res.Configuration;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
@@ -10,13 +11,16 @@ import android.net.NetworkInfo;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.DividerItemDecoration;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.Toast;
+import android.support.design.widget.Snackbar;
 
 import com.howky.mike.bakingapp.utils.JsonUtils;
 import com.howky.mike.bakingapp.provider.BakingContract;
@@ -34,17 +38,28 @@ public class MainActivity extends AppCompatActivity implements
     private BakingAdapter mAdapter;
 
     private boolean mIsConnected;
+    private boolean mIsTablet;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        mIsTablet = checkIfTablet();
+
         // Set up RecyclerView
         mRecyclerView = findViewById(R.id.main_rv);
         mRecyclerView.setHasFixedSize(true);
         mLinearLayoutManager = new LinearLayoutManager(this);
-        mRecyclerView.setLayoutManager(mLinearLayoutManager);
+        if (mIsTablet && getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            mRecyclerView.setLayoutManager(new GridLayoutManager(this, 3));
+        } else {
+            if (mIsTablet) {
+                mRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
+            } else {
+                mRecyclerView.setLayoutManager(mLinearLayoutManager);
+            }
+        }
         DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(
                 mRecyclerView.getContext(),
                 mLinearLayoutManager.getOrientation()
@@ -56,6 +71,10 @@ public class MainActivity extends AppCompatActivity implements
         // Init a suitable Loader
         mIsConnected = isNetworkAvailable();
         if (mIsConnected) {
+            Snackbar snackbar = Snackbar
+                    .make(findViewById(R.id.activity_main_relativeLayout), getResources().getText(R.string.connected_to_internet), Snackbar.LENGTH_SHORT);
+            snackbar.show();
+
             getSupportLoaderManager().initLoader(LOADER_ID_FROM_WEB, null,this);
             // JsonUtils.loadUrlData(this);
         }
@@ -97,7 +116,7 @@ public class MainActivity extends AppCompatActivity implements
                 return new CursorLoader(this, BakingProvider.Cakes.CONTENT_URI,
                         null, null, null, sortOrder);
             default:
-                Log.d(LOG_TAG, "Unhandled Loader ID!");
+                Log.e(LOG_TAG, "Unhandled Loader ID!");
                 return null;
         }
     }
@@ -117,6 +136,23 @@ public class MainActivity extends AppCompatActivity implements
         ConnectivityManager connectivityManager
                 = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+
+
+    private boolean checkIfTablet() {
+        boolean istablet = false;
+
+        DisplayMetrics metrics = new DisplayMetrics();
+        this.getWindowManager().getDefaultDisplay().getMetrics(metrics);
+
+        float yInches= metrics.heightPixels/metrics.ydpi;
+        float xInches= metrics.widthPixels/metrics.xdpi;
+        double diagonalInches = Math.sqrt(xInches*xInches + yInches*yInches);
+        if (diagonalInches>=6.5){
+            istablet = true;
+        }
+        return istablet;
     }
 }

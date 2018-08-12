@@ -42,8 +42,11 @@ public class BakingAdapter extends RecyclerView.Adapter<BakingAdapter.BakingView
         mData.moveToPosition(position);
 
         String name = mData.getString(mData.getColumnIndex(BakingContract.CakeColumns.TITLE));
+        String servings = mData.getString(mData.getColumnIndex(BakingContract.CakeColumns.SERVINGS));
 
         holder.nameTextView.setText(name);
+        String servingsText = mContext.getResources().getString(R.string.servings_text) + " " + servings;
+        holder.servingsTextView.setText(servingsText);
 
     }
 
@@ -61,11 +64,13 @@ public class BakingAdapter extends RecyclerView.Adapter<BakingAdapter.BakingView
     public class BakingViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
          final TextView nameTextView;
+         final TextView servingsTextView;
          final ConstraintLayout constraintLayout;
 
-        public BakingViewHolder(View layoutView) {
+        BakingViewHolder(View layoutView) {
             super(layoutView);
             nameTextView = layoutView.findViewById(R.id.item_name_tv);
+            servingsTextView = layoutView.findViewById(R.id.item_servings_tv);
             constraintLayout = layoutView.findViewById(R.id.item_layout_cl);
             constraintLayout.setOnClickListener(this);
         }

@@ -8,6 +8,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v4.app.LoaderManager;
@@ -18,6 +19,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -25,6 +27,7 @@ import com.howky.mike.bakingapp.BakingAdapter;
 import com.howky.mike.bakingapp.IngredientWidget.IngredientsWidget;
 import com.howky.mike.bakingapp.IngredientWidget.WidgetService;
 import com.howky.mike.bakingapp.R;
+import com.howky.mike.bakingapp.StepDetail.StepDetailFragment;
 import com.howky.mike.bakingapp.provider.BakingContract;
 import com.howky.mike.bakingapp.provider.BakingProvider;
 import com.howky.mike.bakingapp.utils.JsonUtils;
@@ -35,7 +38,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 public class RecipeDetailActivity extends AppCompatActivity implements
-        LoaderManager.LoaderCallbacks<Cursor>{
+        LoaderManager.LoaderCallbacks<Cursor>, RecipeDetailFragment.OnFragmentInteractionListener,
+        StepDetailFragment.OnFragmentInteractionListener{
 
     private static final String LOG_TAG = RecipeDetailActivity.class.getSimpleName();
     private static final String BUNDLE_CAKE_ID ="bundle_cake_id";
@@ -46,15 +50,18 @@ public class RecipeDetailActivity extends AppCompatActivity implements
     private LinearLayoutManager mLinearLayoutManager, mLinearLayoutManagerSteps;
     private IngredientsAdapter mIngredientsAdapter;
     private StepsAdapter mStepsAdapter;
-    public static String[] mStepDesc, mStepVideoURL;
+    public static String[] mStepDesc, mStepVideoURL, mStepVideoThumbnail;
     public static String mTitle;
+    public static boolean mTwoPane;
+    public static FragmentManager mFragmentManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_recipe_detail);
 
-        // TODO implement going back from StepDetailActivity (Bundle)
+
+
         Intent receivedIntent = getIntent();
         mCakeId = receivedIntent.getLongExtra(BakingAdapter.INTENT_CAKE_ID, BakingContract.INVALID_CAKE_ID);
         if(savedInstanceState != null) {
@@ -66,6 +73,20 @@ public class RecipeDetailActivity extends AppCompatActivity implements
             return;
         }
         updateIngredintsWidget(this, mCakeId);
+
+        if (findViewById(R.id.recipe_detail_linearLayout_tablet )!= null) {
+            mTwoPane = true;
+
+            mFragmentManager = getSupportFragmentManager();
+
+            ImageButton prevButton = findViewById(R.id.step_detail_prev_imgbtn);
+//            prevButton.setVisibility(View.GONE);
+            ImageButton nextButton = findViewById(R.id.step_detail_next_imgbtn);
+//            nextButton.setVisibility(View.GONE);
+
+        } else {
+            mTwoPane = false;
+        }
 
         // set up Ingredients RecyclerView
         mIngredientsRecyclerView = findViewById(R.id.recipe_detail_ingredientsItems_rv);
@@ -128,53 +149,15 @@ public class RecipeDetailActivity extends AppCompatActivity implements
         Log.d(LOG_TAG, "title: " + mTitle);
         setTitle(mTitle);
 
-        // set up image
-        String imageUrl = data.getString(data.getColumnIndex(BakingContract.CakeColumns.IMAGE));
-        ImageView imageview = findViewById(R.id.recipe_detail_image_iv);
-        if (imageUrl.equals("")) imageview.setVisibility(View.GONE);
-        else Picasso.get().load(imageUrl).into(imageview);
-
-        // set up servings
-        int servings = data.getInt(data.getColumnIndex(BakingContract.CakeColumns.SERVINGS));
-        String servingsText = getString(R.string.detail_cake_servings_descryption) + " " + servings;
-        TextView servingsTextView  = findViewById(R.id.recipe_detail_servings_tv);
-        servingsTextView.setText(servingsText);
-
         // set up ingredients
         String stringIngredients = data.getString(data.getColumnIndex(BakingContract.CakeColumns.INGREDIENTS));
 
-        //COMPLETED move this logic to JsonUtils
-//        try {
-//            JSONArray jsonIngredients = new JSONArray(stringIngredients);
-//
-//            Double[] quantities = new Double[jsonIngredients.length()];
-//            String[] measures = new String[jsonIngredients.length()];
-//            String[] ingredientNames = new String[jsonIngredients.length()];
-//
-//            String[] ingredientsText = new String[jsonIngredients.length()];
-//
-//            JSONObject jsonIngredient;
-//            for (int i = 0; i < jsonIngredients.length(); i++) {
-//                jsonIngredient = jsonIngredients.getJSONObject(i);
-//                quantities[i] = jsonIngredient.getDouble("quantity");
-//                measures[i] = jsonIngredient.getString("measure");
-//                ingredientNames[i] = jsonIngredient.getString("ingredient");
-//
-//                ingredientsText[i] = quantities[i] + " " + measures[i] + " "
-//                        + ingredientNames[i];
-//            }
-//            mIngredientsAdapter.swapData(ingredientsText);
-//
-//        } catch (JSONException e) {
-//            e.printStackTrace();
-//        }
         String[] ingredientsText = JsonUtils.getIngredients(stringIngredients);
         if (ingredientsText != null) {
             mIngredientsAdapter.swapData(ingredientsText);
         }
 
         //  set up steps
-        // TODO move this logic to JsonUtils
         String stringSteps = data.getString(data.getColumnIndex(BakingContract.CakeColumns.STEPS));
 
         try {
@@ -183,7 +166,7 @@ public class RecipeDetailActivity extends AppCompatActivity implements
             String[] shortDesc = new String[jsonSteps.length()];
             mStepDesc = new String[jsonSteps.length()];
             mStepVideoURL = new String[jsonSteps.length()];
-
+            mStepVideoThumbnail = new String[jsonSteps.length()];
 
             JSONObject jsonStep;
             for (int i = 0; i < jsonSteps.length(); i++) {
@@ -191,7 +174,28 @@ public class RecipeDetailActivity extends AppCompatActivity implements
                 shortDesc[i] = jsonStep.getString("shortDescription");
                 mStepDesc[i] = jsonStep.getString("description");
                 mStepVideoURL[i] = jsonStep.getString("videoURL");
+                mStepVideoThumbnail[i] = jsonStep.getString("thumbnailURL");
             }
+
+            if (mTwoPane) {
+                StepDetailFragment stepDetailFragment = StepDetailFragment.newInstance(1, 0);
+                mFragmentManager.beginTransaction()
+                        .add(R.id.step_detail_fragment_tablet_container, stepDetailFragment)
+                        .commit();
+            }
+
+            // set up image
+            String imageUrl = data.getString(data.getColumnIndex(BakingContract.CakeColumns.IMAGE));
+            ImageView imageview = findViewById(R.id.recipe_detail_image_iv);
+            if (imageUrl.equals("")) imageview.setVisibility(View.GONE);
+            else Picasso.get().load(imageUrl).into(imageview);
+
+            // set up servings
+            int servings = data.getInt(data.getColumnIndex(BakingContract.CakeColumns.SERVINGS));
+            String servingsText = getString(R.string.detail_cake_servings_descryption) + " " + servings;
+            TextView servingsTextView  = findViewById(R.id.recipe_detail_servings_tv);
+            servingsTextView.setText(servingsText);
+
             mStepsAdapter.swapData(shortDesc);
 
         } catch (JSONException e) {
@@ -235,5 +239,15 @@ public class RecipeDetailActivity extends AppCompatActivity implements
         long tescik = intent.getLongExtra(BakingAdapter.INTENT_CAKE_ID, -1);
         Log.d(LOG_TAG, "get cake id: " + tescik);
         setIntent(intent);
+    }
+
+    @Override
+    public void onItemSelected(int position) {
+
+    }
+
+    @Override
+    public void onFragmentInteraction(Uri uri) {
+
     }
 }

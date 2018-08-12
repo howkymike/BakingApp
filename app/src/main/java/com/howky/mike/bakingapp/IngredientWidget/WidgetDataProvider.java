@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Binder;
-import android.util.Log;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
 
@@ -21,7 +20,6 @@ public class WidgetDataProvider implements RemoteViewsService.RemoteViewsFactory
     private long mCakeId;
     String[] mIngredints;
 
-    public static final String LOG_TAG = WidgetDataProvider.class.getSimpleName();
 
 
     public WidgetDataProvider(Context context, Intent intent) {
@@ -35,30 +33,17 @@ public class WidgetDataProvider implements RemoteViewsService.RemoteViewsFactory
             mData.close();
         }
         final long identityToken = Binder.clearCallingIdentity();
-        /**This is done because the widget runs as a separate thread
-         when compared to the current app and hence the app's data won't be accessible to it
-         because I'm using a content provided **/
-//        mData = mContext.getContentResolver().query(QuoteProvider.Quotes.CONTENT_URI,
-//                new String[]{QuoteColumns._ID, QuoteColumns.SYMBOL, QuoteColumns.BIDPRICE,
-//                        QuoteColumns.PERCENT_CHANGE, QuoteColumns.CHANGE, QuoteColumns.ISUP},
-//                QuoteColumns.ISCURRENT + " = ?",
-//                new String[]{"1"},null);
+
         if (mCakeId == 0) {
             mCakeId = 1;
         }
-        Log.d("WidgetDataProvider", "mCakeId: " + mCakeId);
         mData = mContext.getContentResolver().query(BakingProvider.Cakes.withID(mCakeId),
                 null,
                 null,
                 null,
                 null);
 
-        if (mData == null) {
-            Log.d(LOG_TAG, "data is null");
-            return;
-        }
-        if (mData.getCount() <1) {
-            Log.d(LOG_TAG, "data is <1");
+        if (mData == null || mData.getCount() < 1) {
             return;
         }
 
@@ -69,7 +54,6 @@ public class WidgetDataProvider implements RemoteViewsService.RemoteViewsFactory
         } catch (Exception e) {
             e.printStackTrace();
         }
-     //   mData.close();
         Binder.restoreCallingIdentity(identityToken);
     }
 
@@ -99,9 +83,6 @@ public class WidgetDataProvider implements RemoteViewsService.RemoteViewsFactory
 
     @Override
     public RemoteViews getViewAt(int position) {
-        /** Populate your widget's single list item **/
-        //mData.moveToPosition(position);
-        Log.d(LOG_TAG, "widget ingredients: " + mIngredints[position]);
         RemoteViews remoteViews = new RemoteViews(mContext.getPackageName(), R.layout.ingredient_list_wdget);
         remoteViews.setTextViewText(R.id.widget_ingredient_tv ,mIngredints[position]);
         return remoteViews;

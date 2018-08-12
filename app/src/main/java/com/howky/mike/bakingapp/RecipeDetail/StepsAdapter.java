@@ -12,6 +12,7 @@ import android.widget.TextView;
 
 import com.howky.mike.bakingapp.R;
 import com.howky.mike.bakingapp.StepDetail.StepDetailActivity;
+import com.howky.mike.bakingapp.StepDetail.StepDetailFragment;
 
 
 public class StepsAdapter extends RecyclerView.Adapter<StepsAdapter.StepsViewHolder> {
@@ -68,10 +69,19 @@ public class StepsViewHolder extends RecyclerView.ViewHolder implements
     public void onClick(View v) {
         int adapterPosition = getAdapterPosition();
 
-        Intent openDetailStepIntent = new Intent(mContext, StepDetailActivity.class);
-        openDetailStepIntent.putExtra(INTENT_STEP_ID, adapterPosition);
-        openDetailStepIntent.putExtra(INTENT_STEPS_COUNT, getItemCount());
-        mContext.startActivity(openDetailStepIntent);
+        if (RecipeDetailActivity.mTwoPane) {
+            StepDetailFragment stepDetailFragment = StepDetailFragment.newInstance(getItemCount(), adapterPosition);
+            RecipeDetailActivity.mFragmentManager.beginTransaction()
+                    .replace(R.id.step_detail_fragment_tablet_container, stepDetailFragment)
+                    .commit();
+
+        } else {
+            Intent openDetailStepIntent = new Intent(mContext, StepDetailActivity.class);
+            openDetailStepIntent.putExtra(INTENT_STEP_ID, adapterPosition);
+            openDetailStepIntent.putExtra(INTENT_STEPS_COUNT, getItemCount());
+            mContext.startActivity(openDetailStepIntent);
+        }
+
 
     }
 }

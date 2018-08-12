@@ -1,20 +1,17 @@
 package com.howky.mike.bakingapp.IngredientWidget;
 
-import android.app.Application;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.opengl.Visibility;
 import android.view.View;
 import android.widget.RemoteViews;
 
 import com.howky.mike.bakingapp.BakingAdapter;
 import com.howky.mike.bakingapp.MainActivity;
 import com.howky.mike.bakingapp.R;
-import com.howky.mike.bakingapp.RecipeDetail.IngredientsAdapter;
 import com.howky.mike.bakingapp.RecipeDetail.RecipeDetailActivity;
 
 /**

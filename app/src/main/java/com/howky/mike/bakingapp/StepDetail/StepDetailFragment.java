@@ -1,18 +1,18 @@
 package com.howky.mike.bakingapp.StepDetail;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.media.session.MediaButtonReceiver;
+import android.support.v4.app.Fragment;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.util.Patterns;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
@@ -40,10 +40,19 @@ import com.howky.mike.bakingapp.R;
 import com.howky.mike.bakingapp.RecipeDetail.RecipeDetailActivity;
 import com.howky.mike.bakingapp.RecipeDetail.StepsAdapter;
 
-public class StepDetailActivity extends AppCompatActivity implements View.OnClickListener, Player.EventListener,
-    StepDetailFragment.OnFragmentInteractionListener{
+/**
+ * A simple {@link Fragment} subclass.
+ * Activities that contain this fragment must implement the
+ * {@link StepDetailFragment.OnFragmentInteractionListener} interface
+ * to handle interaction events.
+ * Use the {@link StepDetailFragment#newInstance} factory method to
+ * create an instance of this fragment.
+ */
+public class StepDetailFragment extends Fragment implements  View.OnClickListener,
+    Player.EventListener{
 
-    private static final String TAG = StepDetailActivity.class.getSimpleName();
+
+    private static final String TAG = StepDetailFragment.class.getSimpleName();
 
     private SimpleExoPlayer mExoPlayer;
     private PlayerView mPlayerView;
@@ -52,90 +61,141 @@ public class StepDetailActivity extends AppCompatActivity implements View.OnClic
     private ImageButton prevImgbtn, nextImgbtn;
 
     private int mOrientation;
-    private int mStepId;
     private TextView mDescriptionText;
+    private TextView mStepInfo;
+
+    private static final String INTENT_STEPS_COUNT = "steps_count";
+    private static final String INTENT_STEP_ID = "step_id";
+
+    private int mStepId;
     private int mStepsCount;
 
+    private OnFragmentInteractionListener mListener;
+
+    public StepDetailFragment() {
+        // Required empty public constructor
+    }
+
+    /**
+     * Use this factory method to create a new instance of
+     * this fragment using the provided parameters.
+     *
+     * @param stepCount Number of steps.
+     * @param stepId Step Id.
+     * @return A new instance of fragment stepDetailFragment.
+     */
+    public static StepDetailFragment newInstance(int stepCount, int stepId) {
+        StepDetailFragment fragment = new StepDetailFragment();
+        Bundle args = new Bundle();
+        args.putInt(INTENT_STEPS_COUNT, stepCount);
+        args.putInt(INTENT_STEP_ID, stepId);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
     @Override
-    public void onCreate( Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_step_detail);
-        setTitle(RecipeDetailActivity.mTitle);
+        if (getArguments() != null) {
+            mStepsCount = getArguments().getInt(INTENT_STEPS_COUNT, 1);
+            mStepId = getArguments().getInt(INTENT_STEP_ID ,1);
+            mOrientation = getResources().getConfiguration().orientation;
+        } else {
+            mStepsCount = 1;
+            mStepId = 1;
+            mOrientation = getResources().getConfiguration().orientation;
+        }
+    }
 
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        final View rootView = inflater.inflate(R.layout.fragment_step_detail, container, false);
 
-        Intent receivedIntent = getIntent();
-        mStepsCount = receivedIntent.getIntExtra(StepsAdapter.INTENT_STEPS_COUNT, 0);
-        if (mStepsCount == 0) {
-            Log.e(TAG, "Error 0 steps found!");
-            return;
+        mDescriptionText = rootView.findViewById(R.id.step_detail_tv);
+        mDescriptionText.setText(RecipeDetailActivity.mStepDesc[mStepId]);
+
+        if (mOrientation == Configuration.ORIENTATION_PORTRAIT) {
+            mDescriptionText = rootView.findViewById(R.id.step_detail_tv);
+            mDescriptionText.setText(RecipeDetailActivity.mStepDesc[mStepId]);
+            prevImgbtn = rootView.findViewById(R.id.step_detail_prev_imgbtn);
+            prevImgbtn.setOnClickListener(this);
+
+            nextImgbtn = rootView.findViewById(R.id.step_detail_next_imgbtn);
+            nextImgbtn.setOnClickListener(this);
+
+            mStepInfo = rootView.findViewById(R.id.step_detail_info_tv);
+            String stepInfoText = String.format(getResources().getString(R.string.step_info_format), mStepId, mStepsCount);
+            mStepInfo.setText(stepInfoText);
+        } else {
+            prevImgbtn = rootView.findViewById(R.id.step_detail_prev_imgbtn);
+            prevImgbtn.setVisibility(View.GONE);
+
+            nextImgbtn = rootView.findViewById(R.id.step_detail_next_imgbtn);
+            nextImgbtn.setVisibility(View.GONE);
         }
 
-        mOrientation = getResources().getConfiguration().orientation;
 
+        mPlayerView = rootView.findViewById(R.id.playerView);
+        String videoUrl = RecipeDetailActivity.mStepVideoURL[mStepId];
+        String thumbnailUrl = RecipeDetailActivity.mStepVideoThumbnail[mStepId];
+        if (!videoUrl.equals("") || Patterns.WEB_URL.matcher(videoUrl).matches()) {
+            // Initialize the Media Session.
+            initializeMediaSession();
 
+            Log.d("TAG", Uri.parse(RecipeDetailActivity.mStepVideoURL[mStepId]).toString());
+            // Initialize the player.
+            initializePlayer(Uri.parse(RecipeDetailActivity.mStepVideoURL[mStepId]));
+        } else if (!thumbnailUrl.equals("") || Patterns.WEB_URL.matcher(videoUrl).matches()){
+            // Initialize the Media Session.
+            initializeMediaSession();
 
-        mStepId = receivedIntent.getIntExtra(StepsAdapter.INTENT_STEP_ID, -1);
-        if (mStepId == -1) {
-            Log.e(TAG, "Error getting step ID!");
-        }
-        else {
-
-            if (mOrientation == Configuration.ORIENTATION_PORTRAIT) {
-                StepDetailFragment stepDetailFragment = StepDetailFragment.newInstance(mStepsCount, mStepId);
-                android.support.v4.app.FragmentManager fragmentManager = getSupportFragmentManager();
-                fragmentManager.beginTransaction()
-                        .add(R.id.step_fragment_container, stepDetailFragment)
-                        .commit();
-            } else {
-                mPlayerView = findViewById(R.id.playerView);
-
-                String videoUrl = RecipeDetailActivity.mStepVideoURL[mStepId];
-                String thumbnailUrl = RecipeDetailActivity.mStepVideoThumbnail[mStepId];
-                if (!videoUrl.equals("") || Patterns.WEB_URL.matcher(videoUrl).matches()) {
-                    // Initialize the Media Session.
-                    initializeMediaSession();
-
-                    Log.d("TAG", Uri.parse(RecipeDetailActivity.mStepVideoURL[mStepId]).toString());
-                    // Initialize the player.
-                    initializePlayer(Uri.parse(RecipeDetailActivity.mStepVideoURL[mStepId]));
-                } else if (!thumbnailUrl.equals("") || Patterns.WEB_URL.matcher(videoUrl).matches()){
-                    // Initialize the Media Session.
-                    initializeMediaSession();
-
-                    Log.d("TAG", Uri.parse(RecipeDetailActivity.mStepVideoThumbnail[mStepId]).toString());
-                    // Initialize the player.
-                    initializePlayer(Uri.parse(RecipeDetailActivity.mStepVideoThumbnail[mStepId]));
-                } else {
-                    Log.e(TAG, "videourl is invalid! " + videoUrl);
-                }
-            }
-
-//            if (mOrientation == Configuration.ORIENTATION_PORTRAIT) {
-//                mDescriptionText = findViewById(R.id.step_detail_tv);
-//                mDescriptionText.setText(RecipeDetailActivity.mStepDesc[mStepId]);
-//                prevImgbtn = findViewById(R.id.step_detail_prev_imgbtn);
-//                prevImgbtn.setOnClickListener(this);
-//
-//                nextImgbtn = findViewById(R.id.step_detail_next_imgbtn);
-//                nextImgbtn.setOnClickListener(this);
-//            }
-//
-//
-//            mPlayerView = findViewById(R.id.playerView);
-//
-//            String videoUrl = RecipeDetailActivity.mStepVideoURL[mStepId];
-//            if (!videoUrl.equals("") || Patterns.WEB_URL.matcher(videoUrl).matches()) {
-//                // Initialize the Media Session.
-//                initializeMediaSession();
-//
-//                Log.d("TAG", Uri.parse(RecipeDetailActivity.mStepVideoURL[mStepId]).toString());
-//                // Initialize the player.
-//                initializePlayer(Uri.parse(RecipeDetailActivity.mStepVideoURL[mStepId]));
-//            } else {
-//                Log.e(TAG, "videourl is invalid! " + videoUrl);
-//            }
+            Log.d("TAG", Uri.parse(RecipeDetailActivity.mStepVideoThumbnail[mStepId]).toString());
+            // Initialize the player.
+            initializePlayer(Uri.parse(RecipeDetailActivity.mStepVideoThumbnail[mStepId]));
+        } else {
+            Log.e(TAG, "videourl is invalid! " + videoUrl);
         }
 
+        // Inflate the layout for this fragment
+        return rootView;
+    }
+
+    public void onButtonPressed(Uri uri) {
+        if (mListener != null) {
+            mListener.onFragmentInteraction(uri);
+        }
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        if (context instanceof OnFragmentInteractionListener) {
+            mListener = (OnFragmentInteractionListener) context;
+        } else {
+            throw new RuntimeException(context.toString()
+                    + " must implement OnFragmentInteractionListener");
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mListener = null;
+    }
+
+    /**
+     * This interface must be implemented by activities that contain this
+     * fragment to allow an interaction in this fragment to be communicated
+     * to the activity and potentially other fragments contained in that
+     * activity.
+     * <p>
+     * See the Android Training lesson <a href=
+     * "http://developer.android.com/training/basics/fragments/communicating.html"
+     * >Communicating with Other Fragments</a> for more information.
+     */
+    public interface OnFragmentInteractionListener {
+        void onFragmentInteraction(Uri uri);
     }
 
 
@@ -146,7 +206,7 @@ public class StepDetailActivity extends AppCompatActivity implements View.OnClic
     private void initializeMediaSession() {
 
         // Create a MediaSessionCompat.
-        mMediaSession = new MediaSessionCompat(this, TAG);
+        mMediaSession = new MediaSessionCompat(getContext(), TAG);
 
         // Enable callbacks from MediaButtons and TransportControls.
         mMediaSession.setFlags(
@@ -175,6 +235,7 @@ public class StepDetailActivity extends AppCompatActivity implements View.OnClic
 
     }
 
+
     /**
      * Initialize ExoPlayer.
      * @param mediaUri The URI of the sample to play.
@@ -184,7 +245,7 @@ public class StepDetailActivity extends AppCompatActivity implements View.OnClic
             // Create an instance of the ExoPlayer.
             TrackSelector trackSelector = new DefaultTrackSelector();
             LoadControl loadControl = new DefaultLoadControl();
-            RenderersFactory renderersFactory = new DefaultRenderersFactory(this);
+            RenderersFactory renderersFactory = new DefaultRenderersFactory(getContext());
             mExoPlayer = ExoPlayerFactory.newSimpleInstance(renderersFactory, trackSelector, loadControl);
             mPlayerView.setPlayer(mExoPlayer);
 
@@ -192,8 +253,8 @@ public class StepDetailActivity extends AppCompatActivity implements View.OnClic
             mExoPlayer.addListener(this);
 
             // Prepare the MediaSource.
-            String userAgent = Util.getUserAgent(this, "BakingApp");
-            DataSource.Factory factory = new DefaultDataSourceFactory(this, userAgent);
+            String userAgent = Util.getUserAgent(getContext(), "BakingApp");
+            DataSource.Factory factory = new DefaultDataSourceFactory(getContext(), userAgent);
             MediaSource mediaSource = new ExtractorMediaSource.Factory(factory).createMediaSource(mediaUri);
             mExoPlayer.prepare(mediaSource);
             mExoPlayer.setPlayWhenReady(true);
@@ -212,7 +273,7 @@ public class StepDetailActivity extends AppCompatActivity implements View.OnClic
     }
 
     @Override
-    protected void onDestroy() {
+    public void onDestroy() {
         super.onDestroy();
         if (mMediaSession != null) {
             releasePlayer();
@@ -223,7 +284,7 @@ public class StepDetailActivity extends AppCompatActivity implements View.OnClic
     @Override
     public void onClick(View v) {
 
-        Intent openDetailStepIntent = new Intent(this, StepDetailActivity.class);
+        Intent openDetailStepIntent = new Intent(getContext(), StepDetailActivity.class);
         openDetailStepIntent.putExtra(StepsAdapter.INTENT_STEPS_COUNT, mStepsCount);
         Log.d(TAG, "onCLick: " + v.getId());
         Log.d(TAG, "next button id: " + R.id.step_detail_next_imgbtn);
@@ -310,11 +371,6 @@ public class StepDetailActivity extends AppCompatActivity implements View.OnClic
 
     }
 
-    @Override
-    public void onFragmentInteraction(Uri uri) {
-
-    }
-
 
     /**
      * Media Session Callbacks, where all external clients control the player.
@@ -333,20 +389,6 @@ public class StepDetailActivity extends AppCompatActivity implements View.OnClic
         @Override
         public void onSkipToPrevious() {
             mExoPlayer.seekTo(0);
-        }
-    }
-
-    /**
-     * Broadcast Receiver registered to receive the MEDIA_BUTTON intent coming from clients.
-     */
-    public static class MediaReceiver extends BroadcastReceiver {
-
-        public MediaReceiver() {
-        }
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            MediaButtonReceiver.handleIntent(mMediaSession, intent);
         }
     }
 }

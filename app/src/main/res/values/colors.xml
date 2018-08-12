@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#3F51B5</color>
-    <color name="colorPrimaryDark">#303F9F</color>
-    <color name="colorAccent">#FF4081</color>
-    <color name="grey">#9E9E9E</color>
+    <color name="colorPrimary">#e91e63</color>
+    <color name="colorPrimaryLight">#ff6090</color>
+    <color name="colorPrimaryDark">#b0003a</color>
+    <color name="colorAccent">#ff6090</color>
+    <color name="background_light">#fce4ec</color>
+    <color name="background_dark">#c9b2ba</color>
 
-    <color name="flat_pressed">#66999999</color>
-    <color name="flat_disabled_text">#40000000</color>
-    <color name="flat_normal_text">#000000</color>
-    <color name="widget_title">#7986CB</color>
-    <color name="widget_ingredient">#C5CAE9</color>
 </resources>

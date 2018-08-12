@@ -4,6 +4,8 @@ The BakingApp allow a user to select a recipe and see video-guided steps for how
 - BakingApp for Udacity Android Developer Nanodegree
 - This app retrieves data from udacity
 
+![BakingApp college](https://preview.ibb.co/ezchd9/Baking_App_college.png)
+
 ## Built With
 
 * [Appcombat](http://www.dropwizard.io/1.0.2/docs/) - The web framework used

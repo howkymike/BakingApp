@@ -16,6 +16,7 @@ The BakingApp allow a user to select a recipe and see video-guided steps for how
 * [CardView](https://developer.android.com/reference/android/support/v7/widget/CardView) - A FrameLayout with a rounded corner background and shadow
 * [Exoplayer](https://github.com/google/ExoPlayer) -  Application level media player for Android
 * [Schematic](https://github.com/SimonVT/schematic) - Automatically generate a ContentProvider
+* [Espresso](https://developer.android.com/training/testing/espresso/) - Write concise, beautiful, and reliable Android UI tests
 
 ## Common Project Requirements 
 
@@ -58,7 +59,7 @@ Application properly initializes and releases video assets when appropriate.
 ### Proper network asset utilization
 Application should properly retrieve media assets from the provided network links. It should properly handle network requests.
 
-### (TODO) UI Testing
+### UI Testing
 Application makes use of Espresso to test aspects of the UI.
 
 ### Third-party libraries

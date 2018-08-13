@@ -42,6 +42,7 @@ import com.google.android.exoplayer2.util.Util;
 import com.howky.mike.bakingapp.MainActivity;
 import com.howky.mike.bakingapp.R;
 import com.howky.mike.bakingapp.RecipeDetail.RecipeDetailActivity;
+import com.howky.mike.bakingapp.RecipeDetail.RecipeDetailFragment;
 import com.howky.mike.bakingapp.RecipeDetail.StepsAdapter;
 
 /**
@@ -120,9 +121,9 @@ public class StepDetailFragment extends Fragment implements  View.OnClickListene
 
         if (mOrientation == Configuration.ORIENTATION_PORTRAIT || MainActivity.mIsTablet) {
             mDescriptionText = rootView.findViewById(R.id.step_detail_tv);
-            mDescriptionText.setText(RecipeDetailActivity.mStepDesc[mStepId]);
+            mDescriptionText.setText(RecipeDetailFragment.mStepDesc[mStepId]);
         }
-        if (mOrientation == Configuration.ORIENTATION_PORTRAIT) {
+        if (mOrientation == Configuration.ORIENTATION_PORTRAIT && !MainActivity.mIsTablet) {
 
             prevImgbtn = rootView.findViewById(R.id.step_detail_prev_imgbtn);
             prevImgbtn.setOnClickListener(this);
@@ -177,20 +178,20 @@ public class StepDetailFragment extends Fragment implements  View.OnClickListene
     }
 
     public void checkInitializeMediaSession() {
-        String videoUrl = RecipeDetailActivity.mStepVideoURL[mStepId];
-        String thumbnailUrl = RecipeDetailActivity.mStepVideoThumbnail[mStepId];
+        String videoUrl = RecipeDetailFragment.mStepVideoURL[mStepId];
+        String thumbnailUrl = RecipeDetailFragment.mStepVideoThumbnail[mStepId];
         if (!videoUrl.equals("") || Patterns.WEB_URL.matcher(videoUrl).matches()) {
             // Initialize the Media Session.
             initializeMediaSession();
 
             // Initialize the player.
-            initializePlayer(Uri.parse(RecipeDetailActivity.mStepVideoURL[mStepId]));
+            initializePlayer(Uri.parse(RecipeDetailFragment.mStepVideoURL[mStepId]));
         } else if (!thumbnailUrl.equals("") || Patterns.WEB_URL.matcher(videoUrl).matches()){
             // Initialize the Media Session.
             initializeMediaSession();
 
             // Initialize the player.
-            initializePlayer(Uri.parse(RecipeDetailActivity.mStepVideoThumbnail[mStepId]));
+            initializePlayer(Uri.parse(RecipeDetailFragment.mStepVideoThumbnail[mStepId]));
         } else {
             Log.e(TAG, "videourl is invalid! " + videoUrl);
         }

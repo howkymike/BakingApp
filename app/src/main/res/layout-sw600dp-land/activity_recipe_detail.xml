@@ -5,12 +5,12 @@
     android:layout_height="match_parent"
     android:weightSum="100">
 
-    <fragment
-        android:id="@+id/detail_fragment_tablet"
-        android:name="com.howky.mike.bakingapp.RecipeDetail.RecipeDetailFragment"
+    <FrameLayout
+        android:id="@+id/detail_fragment_tablet_container"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="30" />
+
 
     <View
         android:layout_width="1dp"

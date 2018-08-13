@@ -132,7 +132,7 @@ public class StepDetailFragment extends Fragment implements  View.OnClickListene
             nextImgbtn.setOnClickListener(this);
 
             mStepInfo = rootView.findViewById(R.id.step_detail_info_tv);
-            String stepInfoText = String.format(getResources().getString(R.string.step_info_format), mStepId, mStepsCount);
+            String stepInfoText = String.format(getResources().getString(R.string.step_info_format), mStepId, mStepsCount - 1);
             mStepInfo.setText(stepInfoText);
         }
 
@@ -350,7 +350,7 @@ public class StepDetailFragment extends Fragment implements  View.OnClickListene
                 }
                 break;
             case R.id.step_detail_prev_imgbtn:
-                if (mStepId - 1 > 0) {
+                if (mStepId > 0) {
                     openDetailStepIntent.putExtra(StepsAdapter.INTENT_STEP_ID, mStepId - 1);
                     startActivity(openDetailStepIntent);
                 } else {

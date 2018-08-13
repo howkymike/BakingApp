@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
@@ -16,6 +18,7 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.DefaultRenderersFactory;
 import com.google.android.exoplayer2.ExoPlaybackException;
@@ -36,6 +39,7 @@ import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.util.Util;
+import com.howky.mike.bakingapp.MainActivity;
 import com.howky.mike.bakingapp.R;
 import com.howky.mike.bakingapp.RecipeDetail.RecipeDetailActivity;
 import com.howky.mike.bakingapp.RecipeDetail.StepsAdapter;
@@ -51,7 +55,8 @@ import com.howky.mike.bakingapp.RecipeDetail.StepsAdapter;
 public class StepDetailFragment extends Fragment implements  View.OnClickListener,
     Player.EventListener{
 
-
+    private static final String PLAYER_CONTENT_POSITION = "player_content_position";
+    private static final String PLAYER_WHEN_READY = "player_when_ready";
     private static final String TAG = StepDetailFragment.class.getSimpleName();
 
     private SimpleExoPlayer mExoPlayer;
@@ -69,6 +74,8 @@ public class StepDetailFragment extends Fragment implements  View.OnClickListene
 
     private int mStepId;
     private int mStepsCount;
+    private long mExoPosition;
+    private boolean mExoWhenReady;
 
     private OnFragmentInteractionListener mListener;
 
@@ -99,12 +106,11 @@ public class StepDetailFragment extends Fragment implements  View.OnClickListene
         if (getArguments() != null) {
             mStepsCount = getArguments().getInt(INTENT_STEPS_COUNT, 1);
             mStepId = getArguments().getInt(INTENT_STEP_ID ,1);
-            mOrientation = getResources().getConfiguration().orientation;
         } else {
             mStepsCount = 1;
             mStepId = 1;
-            mOrientation = getResources().getConfiguration().orientation;
         }
+        mOrientation = getResources().getConfiguration().orientation;
     }
 
     @Override
@@ -112,12 +118,12 @@ public class StepDetailFragment extends Fragment implements  View.OnClickListene
                              Bundle savedInstanceState) {
         final View rootView = inflater.inflate(R.layout.fragment_step_detail, container, false);
 
-        mDescriptionText = rootView.findViewById(R.id.step_detail_tv);
-        mDescriptionText.setText(RecipeDetailActivity.mStepDesc[mStepId]);
-
-        if (mOrientation == Configuration.ORIENTATION_PORTRAIT) {
+        if (mOrientation == Configuration.ORIENTATION_PORTRAIT || MainActivity.mIsTablet) {
             mDescriptionText = rootView.findViewById(R.id.step_detail_tv);
             mDescriptionText.setText(RecipeDetailActivity.mStepDesc[mStepId]);
+        }
+        if (mOrientation == Configuration.ORIENTATION_PORTRAIT) {
+
             prevImgbtn = rootView.findViewById(R.id.step_detail_prev_imgbtn);
             prevImgbtn.setOnClickListener(this);
 
@@ -127,35 +133,9 @@ public class StepDetailFragment extends Fragment implements  View.OnClickListene
             mStepInfo = rootView.findViewById(R.id.step_detail_info_tv);
             String stepInfoText = String.format(getResources().getString(R.string.step_info_format), mStepId, mStepsCount);
             mStepInfo.setText(stepInfoText);
-        } else {
-            prevImgbtn = rootView.findViewById(R.id.step_detail_prev_imgbtn);
-            prevImgbtn.setVisibility(View.GONE);
-
-            nextImgbtn = rootView.findViewById(R.id.step_detail_next_imgbtn);
-            nextImgbtn.setVisibility(View.GONE);
         }
-
 
         mPlayerView = rootView.findViewById(R.id.playerView);
-        String videoUrl = RecipeDetailActivity.mStepVideoURL[mStepId];
-        String thumbnailUrl = RecipeDetailActivity.mStepVideoThumbnail[mStepId];
-        if (!videoUrl.equals("") || Patterns.WEB_URL.matcher(videoUrl).matches()) {
-            // Initialize the Media Session.
-            initializeMediaSession();
-
-            Log.d("TAG", Uri.parse(RecipeDetailActivity.mStepVideoURL[mStepId]).toString());
-            // Initialize the player.
-            initializePlayer(Uri.parse(RecipeDetailActivity.mStepVideoURL[mStepId]));
-        } else if (!thumbnailUrl.equals("") || Patterns.WEB_URL.matcher(videoUrl).matches()){
-            // Initialize the Media Session.
-            initializeMediaSession();
-
-            Log.d("TAG", Uri.parse(RecipeDetailActivity.mStepVideoThumbnail[mStepId]).toString());
-            // Initialize the player.
-            initializePlayer(Uri.parse(RecipeDetailActivity.mStepVideoThumbnail[mStepId]));
-        } else {
-            Log.e(TAG, "videourl is invalid! " + videoUrl);
-        }
 
         // Inflate the layout for this fragment
         return rootView;
@@ -164,6 +144,55 @@ public class StepDetailFragment extends Fragment implements  View.OnClickListene
     public void onButtonPressed(Uri uri) {
         if (mListener != null) {
             mListener.onFragmentInteraction(uri);
+        }
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        mExoWhenReady = true;
+        mExoPosition = C.POSITION_UNSET;
+        Log.d("Tag", "in onActivityCreated");
+        if (savedInstanceState != null) {
+            mExoPosition = savedInstanceState.getLong(PLAYER_CONTENT_POSITION, C.POSITION_UNSET);
+            mExoWhenReady = savedInstanceState.getBoolean(PLAYER_WHEN_READY, true);
+            Log.d("Tag", "mExoPosition: " + mExoPosition);
+        }
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        if (Util.SDK_INT > 23) {
+            checkInitializeMediaSession();
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if ((Util.SDK_INT <= 23 || mExoPlayer == null)) {
+            checkInitializeMediaSession();
+        }
+    }
+
+    public void checkInitializeMediaSession() {
+        String videoUrl = RecipeDetailActivity.mStepVideoURL[mStepId];
+        String thumbnailUrl = RecipeDetailActivity.mStepVideoThumbnail[mStepId];
+        if (!videoUrl.equals("") || Patterns.WEB_URL.matcher(videoUrl).matches()) {
+            // Initialize the Media Session.
+            initializeMediaSession();
+
+            // Initialize the player.
+            initializePlayer(Uri.parse(RecipeDetailActivity.mStepVideoURL[mStepId]));
+        } else if (!thumbnailUrl.equals("") || Patterns.WEB_URL.matcher(videoUrl).matches()){
+            // Initialize the Media Session.
+            initializeMediaSession();
+
+            // Initialize the player.
+            initializePlayer(Uri.parse(RecipeDetailActivity.mStepVideoThumbnail[mStepId]));
+        } else {
+            Log.e(TAG, "videourl is invalid! " + videoUrl);
         }
     }
 
@@ -256,8 +285,10 @@ public class StepDetailFragment extends Fragment implements  View.OnClickListene
             String userAgent = Util.getUserAgent(getContext(), "BakingApp");
             DataSource.Factory factory = new DefaultDataSourceFactory(getContext(), userAgent);
             MediaSource mediaSource = new ExtractorMediaSource.Factory(factory).createMediaSource(mediaUri);
+
             mExoPlayer.prepare(mediaSource);
-            mExoPlayer.setPlayWhenReady(true);
+            mExoPlayer.setPlayWhenReady(mExoWhenReady);
+            if (mExoPosition != C.TIME_UNSET) mExoPlayer.seekTo(mExoPosition);
         }
     }
 
@@ -273,11 +304,28 @@ public class StepDetailFragment extends Fragment implements  View.OnClickListene
     }
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
-        if (mMediaSession != null) {
-            releasePlayer();
-            mMediaSession.setActive(false);
+    public void onStop() {
+        super.onStop();
+        if (Util.SDK_INT > 23) {
+            if (mMediaSession != null) {
+                releasePlayer();
+                mMediaSession.setActive(false);
+            }
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (mExoPlayer != null) {
+            mExoPosition = mExoPlayer.getCurrentPosition();
+            mExoWhenReady = mExoPlayer.getPlayWhenReady();
+            if (Util.SDK_INT <= 23) {
+                if (mMediaSession != null) {
+                    releasePlayer();
+                    mMediaSession.setActive(false);
+                }
+            }
         }
     }
 
@@ -315,19 +363,13 @@ public class StepDetailFragment extends Fragment implements  View.OnClickListene
     }
 
     @Override
-    public void onTimelineChanged(Timeline timeline, Object manifest, int reason) {
-
-    }
+    public void onTimelineChanged(Timeline timeline, Object manifest, int reason) {}
 
     @Override
-    public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
-
-    }
+    public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {}
 
     @Override
-    public void onLoadingChanged(boolean isLoading) {
-
-    }
+    public void onLoadingChanged(boolean isLoading) {}
 
     @Override
     public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
@@ -342,33 +384,30 @@ public class StepDetailFragment extends Fragment implements  View.OnClickListene
     }
 
     @Override
-    public void onRepeatModeChanged(int repeatMode) {
-
-    }
+    public void onRepeatModeChanged(int repeatMode) {}
 
     @Override
-    public void onShuffleModeEnabledChanged(boolean shuffleModeEnabled) {
-
-    }
+    public void onShuffleModeEnabledChanged(boolean shuffleModeEnabled) {}
 
     @Override
-    public void onPlayerError(ExoPlaybackException error) {
-
-    }
+    public void onPlayerError(ExoPlaybackException error) {}
 
     @Override
-    public void onPositionDiscontinuity(int reason) {
-
-    }
+    public void onPositionDiscontinuity(int reason) {}
 
     @Override
-    public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {
-
-    }
+    public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {}
 
     @Override
-    public void onSeekProcessed() {
+    public void onSeekProcessed() {}
 
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        Log.d("tag", "position:" + mExoPosition);
+        outState.putLong(PLAYER_CONTENT_POSITION, mExoPosition);
+        outState.putBoolean(PLAYER_WHEN_READY, mExoWhenReady);
     }
 
 

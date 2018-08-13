@@ -38,7 +38,7 @@ public class MainActivity extends AppCompatActivity implements
     private BakingAdapter mAdapter;
 
     private boolean mIsConnected;
-    private boolean mIsTablet;
+    public static boolean mIsTablet;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

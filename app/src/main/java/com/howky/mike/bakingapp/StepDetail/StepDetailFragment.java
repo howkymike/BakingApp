@@ -45,6 +45,10 @@ import com.howky.mike.bakingapp.RecipeDetail.RecipeDetailActivity;
 import com.howky.mike.bakingapp.RecipeDetail.RecipeDetailFragment;
 import com.howky.mike.bakingapp.RecipeDetail.StepsAdapter;
 
+import static com.howky.mike.bakingapp.RecipeDetail.RecipeDetailFragment.mStepDesc;
+import static com.howky.mike.bakingapp.RecipeDetail.RecipeDetailFragment.mStepVideoThumbnail;
+import static com.howky.mike.bakingapp.RecipeDetail.RecipeDetailFragment.mStepVideoURL;
+
 /**
  * A simple {@link Fragment} subclass.
  * Activities that contain this fragment must implement the
@@ -56,9 +60,14 @@ import com.howky.mike.bakingapp.RecipeDetail.StepsAdapter;
 public class StepDetailFragment extends Fragment implements  View.OnClickListener,
     Player.EventListener{
 
+    private static final String TAG = StepDetailFragment.class.getSimpleName();
     private static final String PLAYER_CONTENT_POSITION = "player_content_position";
     private static final String PLAYER_WHEN_READY = "player_when_ready";
-    private static final String TAG = StepDetailFragment.class.getSimpleName();
+    private static final String INTENT_STEPS_COUNT = "steps_count";
+    private static final String INTENT_STEP_ID = "step_id";
+    private static final String BUNDLE_STEP_DESC = "bundle_step_desc";
+    private static final String BUNDLE_STEP_VIDEO_URL = "bundle_step_video_url";
+    private static final String BUNDLE_STEP_VIDEO_THUMBNAIL = "bundle_step_video_thumbnail";
 
     private SimpleExoPlayer mExoPlayer;
     private PlayerView mPlayerView;
@@ -70,13 +79,14 @@ public class StepDetailFragment extends Fragment implements  View.OnClickListene
     private TextView mDescriptionText;
     private TextView mStepInfo;
 
-    private static final String INTENT_STEPS_COUNT = "steps_count";
-    private static final String INTENT_STEP_ID = "step_id";
-
     private int mStepId;
     private int mStepsCount;
     private long mExoPosition;
     private boolean mExoWhenReady;
+
+    private String[] mDescryption;
+    private String[] mVideoUrl;
+    private String[] mVideoThumbnail;
 
     private OnFragmentInteractionListener mListener;
 
@@ -112,6 +122,13 @@ public class StepDetailFragment extends Fragment implements  View.OnClickListene
             mStepId = 1;
         }
         mOrientation = getResources().getConfiguration().orientation;
+
+
+        if (savedInstanceState != null) {
+            mDescryption = savedInstanceState.getStringArray(BUNDLE_STEP_DESC);
+            mVideoUrl = savedInstanceState.getStringArray(BUNDLE_STEP_VIDEO_URL);
+            mVideoThumbnail = savedInstanceState.getStringArray(BUNDLE_STEP_VIDEO_THUMBNAIL);
+        }
     }
 
     @Override
@@ -121,7 +138,13 @@ public class StepDetailFragment extends Fragment implements  View.OnClickListene
 
         if (mOrientation == Configuration.ORIENTATION_PORTRAIT || MainActivity.mIsTablet) {
             mDescriptionText = rootView.findViewById(R.id.step_detail_tv);
-            mDescriptionText.setText(RecipeDetailFragment.mStepDesc[mStepId]);
+
+            if (savedInstanceState == null) {
+                mDescriptionText.setText(mStepDesc[mStepId]);
+            } else {
+                mDescriptionText.setText(mDescryption[mStepId]);
+            }
+
         }
         if (mOrientation == Configuration.ORIENTATION_PORTRAIT && !MainActivity.mIsTablet) {
 
@@ -178,20 +201,29 @@ public class StepDetailFragment extends Fragment implements  View.OnClickListene
     }
 
     public void checkInitializeMediaSession() {
-        String videoUrl = RecipeDetailFragment.mStepVideoURL[mStepId];
-        String thumbnailUrl = RecipeDetailFragment.mStepVideoThumbnail[mStepId];
+
+        String videoUrl;
+        String thumbnailUrl;
+        if (mStepVideoURL != null) {
+            videoUrl = mStepVideoURL[mStepId];
+            thumbnailUrl = mStepVideoThumbnail[mStepId];
+        } else {
+            videoUrl = mVideoUrl[mStepId];
+            thumbnailUrl = mVideoUrl[mStepId];
+        }
+
         if (!videoUrl.equals("") || Patterns.WEB_URL.matcher(videoUrl).matches()) {
             // Initialize the Media Session.
             initializeMediaSession();
 
             // Initialize the player.
-            initializePlayer(Uri.parse(RecipeDetailFragment.mStepVideoURL[mStepId]));
+            initializePlayer(Uri.parse(videoUrl));
         } else if (!thumbnailUrl.equals("") || Patterns.WEB_URL.matcher(videoUrl).matches()){
             // Initialize the Media Session.
             initializeMediaSession();
 
             // Initialize the player.
-            initializePlayer(Uri.parse(RecipeDetailFragment.mStepVideoThumbnail[mStepId]));
+            initializePlayer(Uri.parse(thumbnailUrl));
         } else {
             Log.e(TAG, "videourl is invalid! " + videoUrl);
         }
@@ -409,6 +441,10 @@ public class StepDetailFragment extends Fragment implements  View.OnClickListene
         Log.d("tag", "position:" + mExoPosition);
         outState.putLong(PLAYER_CONTENT_POSITION, mExoPosition);
         outState.putBoolean(PLAYER_WHEN_READY, mExoWhenReady);
+
+        outState.putStringArray(BUNDLE_STEP_DESC, RecipeDetailFragment.mStepDesc);
+        outState.putStringArray(BUNDLE_STEP_VIDEO_URL, RecipeDetailFragment.mStepVideoURL);
+        outState.putStringArray(BUNDLE_STEP_VIDEO_THUMBNAIL, RecipeDetailFragment.mStepVideoThumbnail);
     }
 
 
